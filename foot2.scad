@@ -1,4 +1,4 @@
-Select = 0; // [0:Preview, 1:leftFrontFoot, 2:rightFrontFoot, 3:leftRearFoot, 4:rightRearFoot,5:frontPanel,6:rearPanel,7:leftPanel,8:rightPanel]
+Select = 0; // [0:Preview, 1:leftFrontFoot, 2:rightFrontFoot, 3:leftRearFoot, 4:rightRearFoot,5:frontPanel,6:rearPanel,7:leftPanel,8:rightPanel,9:vgaCover]
 
 bezelDepth=15;
 holeX = 31.5;
@@ -197,6 +197,27 @@ module rectFrame(panelW, panelH, border) {
     }
 }
 
+module roundedRect(rectW, rectH, rectR) {
+    hull() {
+        translate([rectR, rectR])
+            circle(r=rectR, $fn=50);
+
+        translate([rectW-rectR, rectR])
+            circle(r=rectR, $fn=50);
+
+        translate([rectR, rectH-rectR])
+            circle(r=rectR, $fn=50);
+
+        translate([rectW-rectR, rectH-rectR])
+            circle(r=rectR, $fn=50);
+    }
+}
+
+module chamferRect(rectW, rectH, rectC) {
+    offset(delta=rectC, chamfer=true)
+        square([rectW-rectC*2, rectH-rectC*2], center=true);
+}
+
 //////////////////////////////////////////////////////////////
 // Base plates
 //////////////////////////////////////////////////////////////
@@ -294,6 +315,76 @@ module panelThreadedInsertRight(panelDepth, panelHeight, riseOverRun, bossDiamet
                 translate([0,0,-1*(bossDiameter/riseOverRun)/2])
                     cylinder(h=bossDiameter/riseOverRun, d=bossDiameter, $fn=50);
             }
+}
+
+//////////////////////////////////////////////////////////////
+// VGA
+//////////////////////////////////////////////////////////////
+
+module vgaCutout() {
+    hull() {
+        square([17.4,9.4], center=true);
+
+        translate([24/2,0,0])       
+            circle(d=6.6, $fn=50);
+
+        translate([-24/2,0,0]) 
+            circle(d=6.6, $fn=50);
+    }
+}
+
+module vgaCover(adapterW=31.4, adapterH=13) {
+    let(sideW = Threaded_insert_width+.8*2, lidD = 9.6-8) {
+        difference() {
+            linear_extrude(lidD) difference() {
+                chamferRect(adapterW+4,adapterH+4+sideW*2, 4.1);
+                
+                vgaCutout();
+            }
+                        
+            translate([(adapterW/2)-(Threaded_insert_width/2),(adapterH/2)+(Threaded_insert_width/2)+1.8])
+                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
+
+            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,(adapterH/2)+(Threaded_insert_width/2)+1.8])
+                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
+
+            translate([(adapterW/2)-(Threaded_insert_width/2),((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1])
+                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
+            
+            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1])
+                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
+        }
+        
+    }
+}
+
+module vgaBackBracket(adapterW=32, adapterH=13.4, adapterD=6.6) {
+    let(sideW = Threaded_insert_width+.8*2) {
+        difference() {
+            translate([0,0,-(adapterD+1.4)/2])
+                linear_extrude(adapterD+1.4)
+                    chamferRect(adapterW+4,adapterH+4+sideW*2, 4.1);
+            
+            translate([0,0,0.8])
+                cube([adapterW,adapterH,adapterD], center=true);
+            
+            translate([0,0,-(adapterD+2)/2])
+                linear_extrude(adapterD+2)
+                    vgaCutout();
+
+            translate([(adapterW/2)-(Threaded_insert_width/2),(adapterH/2)+(Threaded_insert_width/2)+1.8,-1])
+                threadedInsert();
+
+            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,(adapterH/2)+(Threaded_insert_width/2)+1.8,-1])
+                threadedInsert();
+
+            translate([(adapterW/2)-(Threaded_insert_width/2),((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1,-1])
+                threadedInsert();
+            
+            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1,-1])
+                threadedInsert();
+        }
+    }    
 }
 
 //////////////////////////////////////////////////////////////
@@ -489,16 +580,16 @@ module panel(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY, border
         translate([border+border*2/(panelH/riseOverRun),border,2])
         frustum(panelW-border*2, panelH-border*2, panelD-2, riseOverRun, -1*shapeH*2);
         
-        panelThreadedInsertLeft(panelD, panelH, riseOverRun, Threaded_insert_width*1.5);
+        panelThreadedInsertLeft(panelD, panelH, riseOverRun, panelD*0.75);
 
         translate([panelW,0,0])
-            panelThreadedInsertRight(panelD, panelH, riseOverRun, Threaded_insert_width*1.5);
+            panelThreadedInsertRight(panelD, panelH, riseOverRun, panelD*0.75);
     }
 } 
 
 module frontPanel() {
     difference() {
-        panel(184.2,60,10.2,9.6,riseOverRun,2,2,2,15);
+        panel(183,60,10.2,9.6,riseOverRun,2,2,2,15);
         translate([184.2+60/riseOverRun,60,6])
             rotate([0,90,180])
                 bezelCutout(184.2, 6);
@@ -513,15 +604,25 @@ module rearPanel() {
                 translate([146.6+60/riseOverRun,60,6])
                     rotate([0,90,180])
                         bezelCutout(146.6, 6);
+                
+                translate([32+(25*3)+15,60/2,0])
+                    rotate([0,0,90])
+                        linear_extrude(9.6)
+                            chamferRect(31.4+4,13+4+(Threaded_insert_width+.8*2)*2, 4.1);
+                
             }
 
-            for(i = [0:1:3]) {
+            for(i = [0:1:2]) {
                 translate([32+(25*i),60/2-32.5/2,0])
                     keystonePort();
             }
+            
+            translate([32+(25*3)+15,60/2,4])
+                rotate([0,0,90])
+                    vgaBackBracket();
         }
         
-        for(i = [0:1:3]) {
+        for(i = [0:1:2]) {
             translate([15.2+32+(25*i)+4.1,60/2-32.5/2+4.1,0])
                 rotate([0,-90,0])
                     keystoneCutout();
@@ -530,7 +631,7 @@ module rearPanel() {
 }
 
 module leftPanel() {
-    panel(131.8,60,10,9.6,riseOverRun,2,2,2,15);
+    panel(133,60,10,9.6,riseOverRun,2,2,2,15);
     
     translate([(10.4+4)*2-.4,60/2-25/2,0])
         linear_extrude(4.4)
@@ -538,7 +639,7 @@ module leftPanel() {
 }
 
 module rightPanel() {
-    panel(132,60,10,9.6,riseOverRun,2,2,2,15);
+    panel(133,60,10,9.6,riseOverRun,2,2,2,15);
 }
 
 module preview() {
@@ -553,7 +654,7 @@ module preview() {
             frontPanel();
 
     // Right panel
-    translate([holeX*2+180-15,15*1.5+0.2,0])
+    translate([holeX*2+180-15,15*1.5-0.2,0])
         rotate([90,0,90])
             rightPanel();
                
@@ -586,4 +687,8 @@ if (Select==0) {
     leftPanel();
 } else if (Select==8) {
     rightPanel();
+} else if (Select==9) {
+    vgaCover();
 }
+
+//translate([0,0,60]) cube([243,190,110]);
