@@ -1,11 +1,11 @@
-include <rearPanelBlank.scad>;
+include <rearPanelCoverBlank.scad>;
 include <../keystone/keystone.scad>
 
-module keyStonePlate(basePlate=[42,22,3], tab=[4,7,2.5]) {
+module rearPanelCoverKeystone(basePlate=[42,22,3], tab=[4,7,2.5]) {
     BasePlateY = basePlate[1];
     difference() {
         union() {
-            rearPanelBlank(basePlate,tab);
+            rearPanelCoverBlank(basePlate,tab);
             translate([-2,0,0])
             linear_extrude(9.5)
                 square([30,BasePlateY], center=true);
