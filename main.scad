@@ -1,3 +1,8 @@
+include <keystone/keystone.scad>
+include <parallelograms/parallelograms.scad>
+include <util/util.scad>
+include <basePanels/basePanels.scad>
+
 Select = 0; // [0:Preview, 1:leftFrontFoot, 2:rightFrontFoot, 3:leftRearFoot, 4:rightRearFoot,5:frontPanel,6:rearPanel,7:leftPanel,8:rightPanel,9:vgaCover]
 
 bezelDepth=15;
@@ -11,131 +16,6 @@ boltHeadD=Threaded_insert_width+2;
 rise = 9;
 run = 2;
 riseOverRun = rise/run;
-
-//////////////////////////////////////////////////////////////
-// Utility Shapes
-//////////////////////////////////////////////////////////////
-
-module threadedInsert() {
-    cylinder(h=Threaded_insert_height, d=Threaded_insert_width, $fn=50);
-}
-
-module bezelCutout(length, width) {    
-    linear_extrude(length)
-        polygon([
-            [0,0],
-            [width+.4,0],
-            [width,1],
-            [0.4,1]
-        ]);
-}
-
-module columnScrewCutout(totalLength, shankLength) {
-    union() {
-        cylinder(h=shankLength, d=boltHeadD, $fn=50);
-        cylinder(h=totalLength, d=boltThreadD, $fn=50);
-        
-        // The fudge number here is required, otherwise the
-        // shank face gets rendered and the relief is hidden.
-        translate([0,0,shankLength-0.01])
-            intersection() {
-                cylinder(h=shankLength, d=boltHeadD, $fn=50);
-                
-                cube([boltHeadD,boltThreadD,0.4], center=true);
-            }
-    }
-}
-
-module columnScrewCutoutPair(columnDepth, columnHeight, riseOverRun, shankDepth) {
-    
-    translate([0,0,(columnHeight/3)*2])
-        rotate([0,90,0])
-            columnScrewCutout(columnDepth+(columnHeight/riseOverRun),shankDepth+(((columnHeight/3)*2)/riseOverRun));
-
-    translate([0,0,columnHeight/3])
-        rotate([0,90,0])
-            columnScrewCutout(columnDepth+(columnHeight/riseOverRun),shankDepth+((columnHeight/3)/riseOverRun));
-}
-
-module keystoneCutout() {
-    linear_extrude(15.2) polygon([
-        [0,2],
-        [1.4,2],
-        [1.4,0],    
-        [7.6,0],
-        [9.5,2],
-        [9.5,18.8],
-        [4.6,24.6],
-        [1.4,24.6],
-        [1.4,22.6],
-        [0,22.6],
-    ]);
-}
-
-module keystonePort() {
-    translate([4,4,0]) difference() {
-        linear_extrude(9.5)
-            offset(delta=4.1, chamfer=true)
-                square([15.2,24.6]);
-        
-        translate([15.2,0,0])
-            rotate([0,-90,0])
-                keystoneCutout();
-    }
-}
-
-//////////////////////////////////////////////////////////////
-// parallelograms
-//////////////////////////////////////////////////////////////
-
-module parallelogram(w, h, riseOverRun) {
-    slant = h/riseOverRun;
-    polygon([
-        [0,0],
-        [slant,h],
-        [w+slant,h],
-        [w,0],
-    ]);
-}
-
-module parallelogramArray(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY) {
-    offsetX = shapeW+spaceX;
-    offsetY = shapeH+spaceY;
-    for(y = [0:offsetY:panelH+offsetY]) {
-        translate([y/riseOverRun,0,0]) {
-            for(x = [0:offsetX:panelW+offsetX]) {
-                translate([x, y, 0]) parallelogram(shapeW, shapeH, riseOverRun);
-            }
-        }
-    }
-}
-
-module parallelogramPanel(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY) {
-    difference() {
-        parallelogram(panelW, panelH, riseOverRun);
-        
-        parallelogramArray(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY);
-    }
-}
-
-module parallelogramFrame(panelW, panelH, riseOverRun, border) {
-    difference() {
-        parallelogram(panelW, panelH, riseOverRun);
-        
-        offset(delta=border*-1)
-            parallelogram(panelW, panelH, riseOverRun);
-    }
-}
-
-module parallelogramPanelWithFrame(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY, border) {
-    
-    union() {
-        parallelogramFrame(panelW, panelH, riseOverRun, border);
-        
-        translate([border, border])
-            parallelogramPanel(panelW-border, panelH-border, shapeW, shapeH, riseOverRun, spaceX, spaceY);
-    }
-}
 
 //////////////////////////////////////////////////////////////
 // IEC power inlet
@@ -270,51 +150,6 @@ module rightBasePlate(columnWidthX, columnDepthX, columnWidthY, columnDepthY,col
         translate([65, 55, 0]) 
             threadedInsert();
     }
-}
-
-//////////////////////////////////////////////////////////////
-// Panels
-//////////////////////////////////////////////////////////////
-
-module panelThreadedInsertLeft(panelDepth, panelHeight, riseOverRun, bossDiameter) {
-    
-    translate([((panelHeight/3)*2)/riseOverRun,(panelHeight/3)*2,panelDepth/2])
-        rotate([0,90,0])
-            union() {
-                translate([0,0,(bossDiameter/riseOverRun)/2])
-                    threadedInsert();
-                translate([0,0,-1*(bossDiameter/riseOverRun)/2])
-                    cylinder(h=bossDiameter/riseOverRun, d=bossDiameter, $fn=50);
-            }
-
-    translate([(panelHeight/3)/riseOverRun,panelHeight/3,panelDepth/2])
-        rotate([0,90,0])
-            union() {
-                translate([0,0,(bossDiameter/riseOverRun)/2])
-                    threadedInsert();
-                translate([0,0,-1*(bossDiameter/riseOverRun)/2])
-                    cylinder(h=bossDiameter/riseOverRun, d=bossDiameter, $fn=50);
-            }
-}
-
-module panelThreadedInsertRight(panelDepth, panelHeight, riseOverRun, bossDiameter) {
-    translate([((panelHeight/3)*2)/riseOverRun,(panelHeight/3)*2,panelDepth/2])
-        rotate([0,-90,0])
-            union() {
-                translate([0,0,(bossDiameter/riseOverRun)/2])
-                    threadedInsert();
-                translate([0,0,-1*(bossDiameter/riseOverRun)/2])
-                    cylinder(h=bossDiameter/riseOverRun, d=bossDiameter, $fn=50);
-            }
-    
-    translate([(panelHeight/3)/riseOverRun,panelHeight/3,panelDepth/2])
-        rotate([0,-90,0])
-            union() {
-                translate([0,0,(bossDiameter/riseOverRun)/2])
-                    threadedInsert();
-                translate([0,0,-1*(bossDiameter/riseOverRun)/2])
-                    cylinder(h=bossDiameter/riseOverRun, d=bossDiameter, $fn=50);
-            }
 }
 
 //////////////////////////////////////////////////////////////
@@ -543,49 +378,6 @@ module rightRearFoot() {
     }
     
 }
-
-module frustum(width, height, depth, riseOverRun, outset) {
-    hull() {
-        translate([0,0,depth])
-            linear_extrude(0.01)
-                parallelogram(width, height, riseOverRun);
-
-        linear_extrude(0.01)
-            offset(delta=outset)
-        parallelogram(width, height, riseOverRun);
-    }
-}
-
-module panelBase(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY, border, panelD) {
-    union() {
-        translate([border,0,0])
-            linear_extrude(panelD)
-                parallelogram(shapeW, panelH, riseOverRun);
-
-        linear_extrude(panelD)
-        parallelogramPanelWithFrame(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY, border);
-
-        translate([panelW-border-shapeW,0,0])
-            linear_extrude(panelD)
-                parallelogram(shapeW, panelH, riseOverRun);
-    }
-}
-
-module panel(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY, border, panelD) {
-    
-    difference() {
-        panelBase(panelW, panelH, shapeW, shapeH, riseOverRun, spaceX, spaceY, border, panelD);
-        
-        // This is complicated because we have to match the slope on the X axis, not just the boarder.
-        translate([border+border*2/(panelH/riseOverRun),border,2])
-        frustum(panelW-border*2, panelH-border*2, panelD-2, riseOverRun, -1*shapeH*2);
-        
-        panelThreadedInsertLeft(panelD, panelH, riseOverRun, panelD*0.75);
-
-        translate([panelW,0,0])
-            panelThreadedInsertRight(panelD, panelH, riseOverRun, panelD*0.75);
-    }
-} 
 
 module frontPanel() {
     difference() {
