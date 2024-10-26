@@ -2,6 +2,7 @@ include <keystone/keystone.scad>
 include <parallelograms/parallelograms.scad>
 include <util/util.scad>
 include <basePanels/basePanels.scad>
+include <vgaAdapater/vgaAdapter.scad>
 
 Select = 0; // [0:Preview, 1:leftFrontFoot, 2:rightFrontFoot, 3:leftRearFoot, 4:rightRearFoot,5:frontPanel,6:rearPanel,7:leftPanel,8:rightPanel,9:vgaCover]
 
@@ -66,39 +67,6 @@ module iecInletShield(h) {
 }
 
 //////////////////////////////////////////////////////////////
-// Rectangles
-//////////////////////////////////////////////////////////////
-
-module rectFrame(panelW, panelH, border) {
-    difference() {
-        square([panelW, panelH]);
-        offset(delta=border*-1)
-            square([panelW, panelH]);
-    }
-}
-
-module roundedRect(rectW, rectH, rectR) {
-    hull() {
-        translate([rectR, rectR])
-            circle(r=rectR, $fn=50);
-
-        translate([rectW-rectR, rectR])
-            circle(r=rectR, $fn=50);
-
-        translate([rectR, rectH-rectR])
-            circle(r=rectR, $fn=50);
-
-        translate([rectW-rectR, rectH-rectR])
-            circle(r=rectR, $fn=50);
-    }
-}
-
-module chamferRect(rectW, rectH, rectC) {
-    offset(delta=rectC, chamfer=true)
-        square([rectW-rectC*2, rectH-rectC*2], center=true);
-}
-
-//////////////////////////////////////////////////////////////
 // Base plates
 //////////////////////////////////////////////////////////////
 
@@ -150,76 +118,6 @@ module rightBasePlate(columnWidthX, columnDepthX, columnWidthY, columnDepthY,col
         translate([65, 55, 0]) 
             threadedInsert();
     }
-}
-
-//////////////////////////////////////////////////////////////
-// VGA
-//////////////////////////////////////////////////////////////
-
-module vgaCutout() {
-    hull() {
-        square([17.4,9.4], center=true);
-
-        translate([24/2,0,0])       
-            circle(d=6.6, $fn=50);
-
-        translate([-24/2,0,0]) 
-            circle(d=6.6, $fn=50);
-    }
-}
-
-module vgaCover(adapterW=31.4, adapterH=13) {
-    let(sideW = Threaded_insert_width+.8*2, lidD = 9.6-8) {
-        difference() {
-            linear_extrude(lidD) difference() {
-                chamferRect(adapterW+4,adapterH+4+sideW*2, 4.1);
-                
-                vgaCutout();
-            }
-                        
-            translate([(adapterW/2)-(Threaded_insert_width/2),(adapterH/2)+(Threaded_insert_width/2)+1.8])
-                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
-
-            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,(adapterH/2)+(Threaded_insert_width/2)+1.8])
-                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
-
-            translate([(adapterW/2)-(Threaded_insert_width/2),((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1])
-                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
-            
-            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1])
-                cylinder(h=lidD, d1=boltThreadD, d2=boltThreadD*2, $fn=50);
-        }
-        
-    }
-}
-
-module vgaBackBracket(adapterW=32, adapterH=13.4, adapterD=6.6) {
-    let(sideW = Threaded_insert_width+.8*2) {
-        difference() {
-            translate([0,0,-(adapterD+1.4)/2])
-                linear_extrude(adapterD+1.4)
-                    chamferRect(adapterW+4,adapterH+4+sideW*2, 4.1);
-            
-            translate([0,0,0.8])
-                cube([adapterW,adapterH,adapterD], center=true);
-            
-            translate([0,0,-(adapterD+2)/2])
-                linear_extrude(adapterD+2)
-                    vgaCutout();
-
-            translate([(adapterW/2)-(Threaded_insert_width/2),(adapterH/2)+(Threaded_insert_width/2)+1.8,-1])
-                threadedInsert();
-
-            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,(adapterH/2)+(Threaded_insert_width/2)+1.8,-1])
-                threadedInsert();
-
-            translate([(adapterW/2)-(Threaded_insert_width/2),((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1,-1])
-                threadedInsert();
-            
-            translate([((adapterW/2)-(Threaded_insert_width/2))*-1,((adapterH/2)+(Threaded_insert_width/2)+1.8)*-1,-1])
-                threadedInsert();
-        }
-    }    
 }
 
 //////////////////////////////////////////////////////////////
