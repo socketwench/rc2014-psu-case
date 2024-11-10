@@ -1,3 +1,5 @@
+include <../util/util.scad>
+
 module rearPanelCoverTab(tab=[4,7]) {
     tabID=tab[0];
     tabOD=tab[1];
@@ -54,5 +56,25 @@ module rearPanelCoverBlank(basePlate=[42,22,3], tab=[4,7,2.5]) {
                 cube([BasePlateX-1, BasePlateY-1,0.4], center=true);
                 cube([BasePlateX-2, BasePlateY-2,0.4], center=true);
             }
+    }
+}
+
+module rearPanelCoverCutout(basePlate=[42,22], tab=[4,7,2.5]) {
+    BasePlateX=basePlate[0];
+    BasePlateY=basePlate[1];
+    tabID=tab[0];
+    tabOD=tab[1];
+    tabYInset=tab[2];
+    
+    
+    union() {
+        linear_extrude(Threaded_insert_height)
+            square([BasePlateX-2, BasePlateY-2], center=true);
+        
+        translate([BasePlateX/2*-1-tabID/2,BasePlateY/2*-1+tabOD/2+tabYInset])
+            threadedInsert();
+        
+        translate([BasePlateX/2+tabID/2,BasePlateY/2-tabOD/2-tabYInset])
+            threadedInsert();
     }
 }

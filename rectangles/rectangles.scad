@@ -23,6 +23,11 @@ module roundedRect(rectW, rectH, rectR) {
     }
 }
 
+module centeredRoundedRect(rectW, rectH, rectR) {
+    translate([rectW/-2, rectH/-2])
+        roundedRect(rectW, rectH, rectR);
+}
+
 module chamferRect(rectW, rectH, rectC) {
     offset(delta=rectC, chamfer=true)
         square([rectW-rectC*2, rectH-rectC*2], center=true);
